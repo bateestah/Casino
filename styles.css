@@ -1,0 +1,527 @@
+:root {
+  --bg: radial-gradient(circle at top, #1b1f3b 0%, #0b0e20 45%, #03050f 100%);
+  --glass: rgba(255, 255, 255, 0.08);
+  --accent: #f8c75f;
+  --accent-strong: #f2a93b;
+  --text-primary: #f5f6ff;
+  --text-secondary: rgba(245, 246, 255, 0.7);
+  --card-bg: rgba(14, 19, 41, 0.85);
+  --shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+  --border-light: rgba(255, 255, 255, 0.2);
+  --win: #54d47b;
+  --lose: #ff6b6b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Poppins", sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("https://images.unsplash.com/photo-1542144812-0694b3a7baf1?auto=format&fit=crop&w=1600&q=80")
+      center / cover no-repeat;
+  opacity: 0.18;
+  z-index: -2;
+}
+
+.table-glow {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(44, 160, 96, 0.35), transparent 60%),
+    radial-gradient(circle at bottom, rgba(0, 112, 168, 0.3), transparent 65%);
+  filter: blur(35px);
+  opacity: 0.9;
+  z-index: -1;
+}
+
+.app-shell {
+  width: min(1100px, 100%);
+  background: linear-gradient(160deg, rgba(17, 23, 42, 0.88), rgba(9, 12, 25, 0.88));
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  backdrop-filter: blur(14px);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.75rem 2.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(10, 15, 30, 0.75);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-icon {
+  font-size: 2.8rem;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.brand h1 {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  margin: 0;
+}
+
+.brand p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+
+.lobby-btn {
+  border: 1px solid var(--border-light);
+  background: transparent;
+  color: var(--text-primary);
+  font-weight: 500;
+  border-radius: 999px;
+  padding: 0.65rem 1.6rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.lobby-btn.hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lobby-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.screen {
+  display: none;
+  padding: 2.5rem clamp(1.5rem, 4vw, 3rem) 3rem;
+  min-height: 580px;
+}
+
+.screen.active {
+  display: block;
+  animation: fadeIn 0.5s ease;
+}
+
+.game-header {
+  text-align: center;
+  max-width: 620px;
+  margin: 0 auto 2.5rem;
+}
+
+.game-header h2 {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  margin: 0 0 0.5rem;
+}
+
+.game-header p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.intro-card {
+  background: var(--card-bg);
+  padding: clamp(2rem, 6vw, 3.5rem);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.intro-card h2 {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  margin-bottom: 0.75rem;
+}
+
+.intro-card p {
+  color: var(--text-secondary);
+  margin-bottom: 2.25rem;
+}
+
+.game-selector {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.action-btn {
+  background: linear-gradient(135deg, rgba(248, 199, 95, 0.12), rgba(248, 199, 95, 0.08));
+  border: 1px solid rgba(248, 199, 95, 0.35);
+  color: var(--text-primary);
+  padding: 1.2rem 1.4rem;
+  border-radius: 18px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.action-btn span {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.action-btn small {
+  color: var(--text-secondary);
+  display: block;
+  margin-top: 0.4rem;
+}
+
+.action-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 32px rgba(248, 199, 95, 0.16);
+}
+
+.blackjack-table {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2rem;
+  background: rgba(15, 58, 36, 0.4);
+  border: 1px solid rgba(84, 212, 123, 0.25);
+  border-radius: 22px;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.blackjack-table::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  border: 1px solid rgba(84, 212, 123, 0.28);
+  pointer-events: none;
+}
+
+.hand-column h3 {
+  margin: 0 0 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  min-height: 130px;
+}
+
+.card {
+  width: 70px;
+  height: 100px;
+  border-radius: 12px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(246, 246, 246, 0.85));
+  box-shadow: 0 15px 25px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.5rem;
+  color: #1b1f3b;
+  font-weight: 600;
+  position: relative;
+}
+
+.card.back {
+  background: linear-gradient(160deg, rgba(18, 25, 56, 0.9), rgba(5, 8, 20, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  justify-content: center;
+  align-items: center;
+}
+
+.card.back::after {
+  content: "♣";
+  font-size: 1.6rem;
+  color: rgba(248, 199, 95, 0.8);
+}
+
+.card.red {
+  color: #c62828;
+}
+
+.card span {
+  font-family: "Playfair Display", serif;
+}
+
+.card .value {
+  font-size: 1.45rem;
+}
+
+.card .suit {
+  font-size: 1.2rem;
+  align-self: flex-end;
+}
+
+.hand-value {
+  margin-top: 1rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.blackjack-controls {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.blackjack-controls button {
+  padding: 0.8rem 1.8rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.blackjack-controls button:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.blackjack-controls .accent,
+#spin-wheel.accent {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #1b1f3b;
+}
+
+.blackjack-controls .accent:hover,
+#spin-wheel.accent:hover {
+  background: linear-gradient(135deg, var(--accent-strong), #ef8f2f);
+}
+
+.status-banner {
+  text-align: center;
+  min-height: 1.5em;
+  margin-top: 1.5rem;
+  font-weight: 500;
+}
+
+.status-banner.win {
+  color: var(--win);
+}
+
+.status-banner.lose {
+  color: var(--lose);
+}
+
+.status-banner.push {
+  color: var(--accent);
+}
+
+.roulette-layout {
+  display: grid;
+  gap: clamp(2rem, 5vw, 4rem);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-items: center;
+}
+
+.wheel {
+  width: clamp(240px, 40vw, 320px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(
+      #d13b43 0 15deg,
+      #0f1b33 15deg 25deg,
+      #d13b43 25deg 35deg,
+      #0f1b33 35deg 45deg,
+      #d13b43 45deg 55deg,
+      #0f1b33 55deg 65deg,
+      #d13b43 65deg 75deg,
+      #0f1b33 75deg 90deg,
+      #d13b43 90deg 105deg,
+      #0f1b33 105deg 120deg,
+      #d13b43 120deg 135deg,
+      #0f1b33 135deg 150deg,
+      #d13b43 150deg 165deg,
+      #0f1b33 165deg 180deg,
+      #d13b43 180deg 195deg,
+      #0f1b33 195deg 210deg,
+      #d13b43 210deg 225deg,
+      #0f1b33 225deg 240deg,
+      #d13b43 240deg 255deg,
+      #0f1b33 255deg 270deg,
+      #d13b43 270deg 285deg,
+      #0f1b33 285deg 300deg,
+      #d13b43 300deg 315deg,
+      #0f1b33 315deg 330deg,
+      #d13b43 330deg 345deg,
+      #0f1b33 345deg 360deg
+    ),
+    radial-gradient(circle at center, rgba(0, 0, 0, 0.75) 65%, transparent 66%);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.wheel::after {
+  content: "";
+  position: absolute;
+  top: -14px;
+  width: 24px;
+  height: 24px;
+  background: var(--accent);
+  clip-path: polygon(50% 0, 0 100%, 100% 100%);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
+}
+
+.wheel-center {
+  width: 40%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at top, #fff6da, #f4b347);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: #1b1f3b;
+  font-weight: 700;
+  gap: 0.25rem;
+  box-shadow: inset 0 4px 8px rgba(255, 255, 255, 0.3), inset 0 -4px 8px rgba(0, 0, 0, 0.25);
+}
+
+.wheel-center span {
+  font-size: clamp(2rem, 5vw, 2.6rem);
+}
+
+.wheel-center small {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+#roulette-color.red {
+  color: #d13b43;
+}
+
+#roulette-color.black {
+  color: #0f1b33;
+}
+
+#roulette-color.green {
+  color: #2ec27e;
+}
+
+.betting-panel {
+  background: rgba(17, 23, 42, 0.72);
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  display: grid;
+  gap: 1rem;
+}
+
+.balance-display h3 {
+  margin: 0 0 0.25rem;
+}
+
+.balance-display p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.input-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+input[type="number"] {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+input[type="number"]:focus {
+  outline: 2px solid rgba(248, 199, 95, 0.55);
+}
+
+.bet-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.bet-option {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.bet-option:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+}
+
+.bet-option.active {
+  border-color: var(--accent);
+  box-shadow: 0 12px 20px rgba(248, 199, 95, 0.15);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 2rem 1rem;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .lobby-btn {
+    align-self: stretch;
+  }
+
+  .blackjack-controls {
+    flex-direction: column;
+  }
+}
