@@ -347,11 +347,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const rouletteState = {
     bank: 500,
     rotation: 0,
+    currentIndex: 0,
+    selectedNumber: 0,
   };
 
   const redNumbers = new Set([
     1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36,
   ]);
+
+  const wheelNumbers = [
+    0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10,
+    5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26,
+  ];
+
+  const segmentAngle = 360 / wheelNumbers.length;
+  const gradientStart = -90 - segmentAngle / 2;
 
   const rouletteBankEl = document.getElementById("roulette-bank");
   const rouletteBetInput = document.getElementById("roulette-bet");
@@ -367,6 +377,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const rouletteNumberSelect = document.getElementById("roulette-number");
   const rouletteColorSelect = document.getElementById("roulette-color");
   const rouletteParitySelect = document.getElementById("roulette-parity");
+  const rouletteGrid = document.getElementById("roulette-grid");
+  const rouletteBetTypeRadios = document.querySelectorAll(
+    'input[name="roulette-bet-type"]'
+  );
 
   for (let i = 0; i <= 36; i += 1) {
     const option = document.createElement("option");
@@ -385,19 +399,192 @@ document.addEventListener("DOMContentLoaded", () => {
     return number % 2 === 0 ? "even" : "odd";
   };
 
+  const gridCells = new Map();
+
+  const updateGridSelection = () => {
+    gridCells.forEach((cell, key) => {
+      const cellNumber = Number(key);
+      cell.classList.toggle(
+        "selected",
+        cellNumber === rouletteState.selectedNumber
+      );
+    });
+  };
+
+  const getSelectedBetType = () => {
+    const selected = document.querySelector(
+      'input[name="roulette-bet-type"]:checked'
+    );
+    return selected ? selected.value : "number";
+  };
+
+  const refreshChipDisplay = () => {
+    const betType = getSelectedBetType();
+    const amount = parseInt(rouletteBetInput.value, 10);
+
+    gridCells.forEach((cell, key) => {
+      const chip = cell.querySelector(".chip");
+      if (!chip) return;
+      const cellNumber = Number(key);
+      const showChip =
+        betType === "number" &&
+        cellNumber === rouletteState.selectedNumber &&
+        !Number.isNaN(amount) &&
+        amount > 0;
+
+      cell.classList.toggle("has-chip", showChip);
+      chip.textContent = showChip ? formatChips(amount) : "";
+    });
+  };
+
+  const setSelectedNumber = (number, { updateSelect = true } = {}) => {
+    const numericNumber = Number(number);
+    if (!gridCells.has(numericNumber)) return;
+
+    rouletteState.selectedNumber = numericNumber;
+    updateGridSelection();
+
+    if (updateSelect) {
+      rouletteNumberSelect.value = numericNumber;
+    }
+
+    refreshChipDisplay();
+  };
+
   const updateRouletteBank = () => {
     rouletteBankEl.textContent = formatChips(rouletteState.bank);
   };
 
   const updateRouletteBetFields = () => {
-    const selected = document.querySelector(
-      'input[name="roulette-bet-type"]:checked'
-    );
-    const betType = selected ? selected.value : "number";
+    const betType = getSelectedBetType();
 
     numberField.classList.toggle("hidden", betType !== "number");
     colorField.classList.toggle("hidden", betType !== "color");
     parityField.classList.toggle("hidden", betType !== "parity");
+
+    if (rouletteGrid) {
+      rouletteGrid.classList.toggle("disabled", betType !== "number");
+    }
+
+    refreshChipDisplay();
+  };
+
+  const highlightResultCell = (number) => {
+    const cell = gridCells.get(number);
+    if (!cell) return;
+    cell.classList.add("hit");
+    setTimeout(() => {
+      cell.classList.remove("hit");
+    }, 1600);
+  };
+
+  const buildRouletteWheel = () => {
+    if (!rouletteWheel) return;
+
+    const palette = {
+      red: "rgba(255, 77, 103, 0.96)",
+      black: "rgba(31, 40, 61, 0.96)",
+      green: "rgba(22, 160, 133, 0.94)",
+    };
+
+    const gradientStops = wheelNumbers
+      .map((number, index) => {
+        const colorKey = getRouletteColor(number);
+        const color = palette[colorKey];
+        const start = gradientStart + index * segmentAngle;
+        const end = start + segmentAngle;
+        return `${color} ${start.toFixed(4)}deg ${end.toFixed(4)}deg`;
+      })
+      .join(", ");
+
+    const radialOverlay =
+      "radial-gradient(circle at 50% 45%, rgba(255,255,255,0.22), rgba(255,255,255,0) 62%)";
+    rouletteWheel.style.background = `${radialOverlay}, conic-gradient(from ${gradientStart}deg, ${gradientStops})`;
+
+    const existingRing = rouletteWheel.querySelector(".wheel-numbers");
+    if (existingRing) {
+      existingRing.remove();
+    }
+
+    const numberRing = document.createElement("div");
+    numberRing.classList.add("wheel-numbers");
+
+    const radius = 118;
+    wheelNumbers.forEach((number, index) => {
+      const numberEl = document.createElement("span");
+      numberEl.classList.add("wheel-number", getRouletteColor(number));
+      numberEl.textContent = number;
+      const angle = gradientStart + index * segmentAngle + segmentAngle / 2;
+      numberEl.style.transform = `rotate(${angle}deg) translateY(-${radius}px) rotate(${-angle}deg)`;
+      numberRing.append(numberEl);
+    });
+
+    rouletteWheel.insertBefore(numberRing, rouletteWheel.firstChild);
+  };
+
+  const createGridCell = (number) => {
+    if (!rouletteGrid) return null;
+
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.classList.add("grid-cell");
+
+    if (number === 0) {
+      cell.classList.add("zero");
+    } else {
+      cell.classList.add(getRouletteColor(number));
+    }
+
+    cell.dataset.number = number;
+
+    const label = document.createElement("span");
+    label.classList.add("number-label");
+    label.textContent = number;
+
+    const chip = document.createElement("span");
+    chip.classList.add("chip");
+
+    cell.append(label, chip);
+
+    cell.addEventListener("click", () => {
+      const numberRadio = Array.from(rouletteBetTypeRadios).find(
+        (radio) => radio.value === "number"
+      );
+
+      if (numberRadio && !numberRadio.checked) {
+        numberRadio.checked = true;
+        updateRouletteBetFields();
+      }
+
+      setSelectedNumber(number);
+    });
+
+    rouletteGrid.append(cell);
+    gridCells.set(number, cell);
+    return cell;
+  };
+
+  const buildRouletteGrid = () => {
+    if (!rouletteGrid) return;
+
+    rouletteGrid.innerHTML = "";
+    gridCells.clear();
+
+    const zeroCell = createGridCell(0);
+    if (zeroCell) {
+      zeroCell.style.gridRow = "span 12";
+    }
+
+    for (let row = 0; row < 12; row += 1) {
+      const base = row * 3;
+      const rowNumbers = [base + 3, base + 2, base + 1];
+
+      rowNumbers.forEach((value) => {
+        if (value <= 36) {
+          createGridCell(value);
+        }
+      });
+    }
   };
 
   const addHistoryItem = (number, color, win, delta) => {
@@ -432,13 +619,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const betType = document.querySelector(
-      'input[name="roulette-bet-type"]:checked'
-    ).value;
+    const betType = getSelectedBetType();
 
     let chosenValue;
     if (betType === "number") {
-      chosenValue = parseInt(rouletteNumberSelect.value, 10);
+      chosenValue = rouletteState.selectedNumber;
     } else if (betType === "color") {
       chosenValue = rouletteColorSelect.value;
     } else {
@@ -448,7 +633,8 @@ document.addEventListener("DOMContentLoaded", () => {
     rouletteState.bank -= betAmount;
     updateRouletteBank();
 
-    const resultNumber = Math.floor(Math.random() * 37);
+    const resultIndex = Math.floor(Math.random() * wheelNumbers.length);
+    const resultNumber = wheelNumbers[resultIndex];
     const resultColor = getRouletteColor(resultNumber);
     const resultParity = getRouletteParity(resultNumber);
 
@@ -470,13 +656,23 @@ document.addEventListener("DOMContentLoaded", () => {
       payout = betAmount * 2;
     }
 
-    const rotationDelta = 720 + Math.floor(Math.random() * 360);
-    rouletteState.rotation += rotationDelta;
+    const stepsForward =
+      (resultIndex - rouletteState.currentIndex + wheelNumbers.length) %
+      wheelNumbers.length;
+    const extraSpins = Math.floor(Math.random() * 4) + 6;
+    const rotationDelta = extraSpins * 360 + stepsForward * segmentAngle;
+
+    rouletteState.rotation -= rotationDelta;
+    rouletteState.currentIndex = resultIndex;
+
     rouletteWheel.style.setProperty("--rotation", `${rouletteState.rotation}deg`);
     spinButton.disabled = true;
+
+    const spinDuration = 3200;
     setTimeout(() => {
       spinButton.disabled = false;
-    }, 2600);
+      highlightResultCell(resultNumber);
+    }, spinDuration);
 
     if (win) {
       rouletteState.bank += payout;
@@ -501,15 +697,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const resetRoulette = () => {
     rouletteState.bank = 500;
     rouletteState.rotation = 0;
+    rouletteState.currentIndex = 0;
     rouletteWheel.style.setProperty("--rotation", "0deg");
     rouletteHistory.innerHTML = "";
     updateRouletteBank();
     rouletteMessage.textContent = "Bank refilled. Place a bet to spin again.";
+    setSelectedNumber(0);
   };
 
-  document
-    .querySelectorAll('input[name="roulette-bet-type"]')
-    .forEach((radio) => radio.addEventListener("change", updateRouletteBetFields));
+  rouletteBetTypeRadios.forEach((radio) =>
+    radio.addEventListener("change", updateRouletteBetFields)
+  );
+
+  rouletteNumberSelect.addEventListener("change", (event) => {
+    const value = parseInt(event.target.value, 10);
+    if (!Number.isNaN(value)) {
+      setSelectedNumber(value, { updateSelect: false });
+    }
+  });
+
+  rouletteBetInput.addEventListener("input", refreshChipDisplay);
+
+  buildRouletteWheel();
+  buildRouletteGrid();
+  setSelectedNumber(0);
 
   spinButton.addEventListener("click", spinRoulette);
   rouletteResetButton.addEventListener("click", resetRoulette);
