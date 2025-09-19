@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neon Nights Casino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="background-glow"></div>
+    <main class="app-shell">
+      <header class="brand">
+        <h1>Neon Nights Casino</h1>
+        <p>Step onto the virtual floor and pick your game of chance.</p>
+      </header>
+
+      <section id="start-screen" class="panel visible">
+        <div class="start-card glass">
+          <h2>Choose Your Table</h2>
+          <p>
+            Are you in the mood to beat the dealer at blackjack or feel the thrill of the
+            roulette wheel? Select a game to begin.
+          </p>
+          <div class="game-buttons">
+            <button id="play-blackjack" class="primary">Play Blackjack</button>
+            <button id="play-roulette" class="secondary">Play Roulette</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="blackjack" class="panel hidden">
+        <div class="panel-header">
+          <button class="back-button" data-target="start">← Back to Lobby</button>
+          <div>
+            <h2>Blackjack Table</h2>
+            <p class="subtitle">Try to hit 21 without busting.</p>
+          </div>
+          <div class="bank">Bankroll: <span id="blackjack-bank">500</span> chips</div>
+        </div>
+
+        <div class="table felt">
+          <div class="dealer-area">
+            <h3>Dealer</h3>
+            <div class="hand" id="dealer-cards"></div>
+            <span class="score" id="dealer-score">Score: 0</span>
+          </div>
+          <div class="player-area">
+            <h3>You</h3>
+            <div class="hand" id="player-cards"></div>
+            <span class="score" id="player-score">Score: 0</span>
+          </div>
+        </div>
+
+        <div class="controls">
+          <label class="control">
+            <span>Bet</span>
+            <select id="blackjack-bet">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+              <option value="250">250</option>
+            </select>
+          </label>
+          <div class="button-group">
+            <button id="blackjack-deal" class="primary">Deal</button>
+            <button id="blackjack-hit" class="secondary" disabled>Hit</button>
+            <button id="blackjack-stand" class="secondary" disabled>Stand</button>
+          </div>
+          <button id="blackjack-reset" class="ghost">Reset Chips</button>
+        </div>
+
+        <div class="message" id="blackjack-message">Press deal to start a round.</div>
+      </section>
+
+      <section id="roulette" class="panel hidden">
+        <div class="panel-header">
+          <button class="back-button" data-target="start">← Back to Lobby</button>
+          <div>
+            <h2>Roulette Wheel</h2>
+            <p class="subtitle">Place your bet and watch the wheel spin.</p>
+          </div>
+          <div class="bank">Bankroll: <span id="roulette-bank">500</span> chips</div>
+        </div>
+
+        <div class="roulette-layout glass">
+          <div class="wheel-wrapper">
+            <div class="pointer"></div>
+            <div class="roulette-wheel" id="roulette-wheel">
+              <div class="wheel-center"></div>
+            </div>
+          </div>
+
+          <div class="betting-panel">
+            <div class="field-group">
+              <span class="label">Bet Type</span>
+              <label>
+                <input type="radio" name="roulette-bet-type" value="number" checked />
+                Number
+              </label>
+              <label>
+                <input type="radio" name="roulette-bet-type" value="color" />
+                Color
+              </label>
+              <label>
+                <input type="radio" name="roulette-bet-type" value="parity" />
+                Odd / Even
+              </label>
+            </div>
+
+            <div class="field-group" id="roulette-number-field">
+              <label for="roulette-number" class="label">Number</label>
+              <select id="roulette-number"></select>
+            </div>
+
+            <div class="field-group hidden" id="roulette-color-field">
+              <label for="roulette-color" class="label">Color</label>
+              <select id="roulette-color">
+                <option value="red">Red</option>
+                <option value="black">Black</option>
+              </select>
+            </div>
+
+            <div class="field-group hidden" id="roulette-parity-field">
+              <label for="roulette-parity" class="label">Odd / Even</label>
+              <select id="roulette-parity">
+                <option value="odd">Odd</option>
+                <option value="even">Even</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label for="roulette-bet" class="label">Bet Amount</label>
+              <input
+                type="number"
+                id="roulette-bet"
+                min="5"
+                step="5"
+                value="25"
+              />
+            </div>
+
+            <div class="button-group">
+              <button id="roulette-spin" class="primary" type="button">Spin the Wheel</button>
+              <button id="roulette-reset" class="ghost" type="button">Reset Chips</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="message" id="roulette-message">Pick a bet and spin the wheel.</div>
+        <div class="history">
+          <h4>Recent Spins</h4>
+          <ul id="roulette-history"></ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">Good luck and play responsibly.</footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
