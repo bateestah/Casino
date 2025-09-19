@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Luxe Casino Lounge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Poppins:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="table-glow"></div>
+    <main class="app-shell">
+      <header class="app-header">
+        <div class="brand">
+          <span class="brand-icon">♔</span>
+          <div>
+            <h1>Luxe Casino Lounge</h1>
+            <p>Step up to the tables and try your luck</p>
+          </div>
+        </div>
+        <button class="lobby-btn" data-target="start">Return to Lobby</button>
+      </header>
+
+      <section id="start-screen" class="screen active">
+        <div class="intro-card">
+          <h2>Choose Your Game</h2>
+          <p>
+            Whether you are here for strategic play or a spin of fate, the Luxe
+            Casino Lounge has a seat reserved just for you.
+          </p>
+          <div class="game-selector">
+            <button class="action-btn" data-game="blackjack">
+              <span>Play Blackjack</span>
+              <small>Beat the dealer &amp; hit 21</small>
+            </button>
+            <button class="action-btn" data-game="roulette">
+              <span>Spin Roulette</span>
+              <small>Pick your bet &amp; watch the wheel</small>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="blackjack-screen" class="screen">
+        <div class="game-header">
+          <h2>Blackjack Table</h2>
+          <p>Draw cards, chase 21, and stay one step ahead of the dealer.</p>
+        </div>
+        <div class="blackjack-table">
+          <div class="hand-column">
+            <h3>Dealer</h3>
+            <div class="card-row" id="dealer-hand"></div>
+            <p class="hand-value" id="dealer-score">Score: 0</p>
+          </div>
+          <div class="hand-column">
+            <h3>Player</h3>
+            <div class="card-row" id="player-hand"></div>
+            <p class="hand-value" id="player-score">Score: 0</p>
+          </div>
+        </div>
+        <div class="blackjack-controls">
+          <button id="blackjack-deal" class="accent">Deal New Round</button>
+          <div>
+            <button id="blackjack-hit">Hit</button>
+            <button id="blackjack-stand">Stand</button>
+          </div>
+        </div>
+        <p class="status-banner" id="blackjack-message"></p>
+      </section>
+
+      <section id="roulette-screen" class="screen">
+        <div class="game-header">
+          <h2>Roulette Wheel</h2>
+          <p>Select your bet, spin the wheel, and watch where the ball lands.</p>
+        </div>
+        <div class="roulette-layout">
+          <div class="wheel" aria-live="polite">
+            <div class="wheel-center">
+              <span id="roulette-number">--</span>
+              <small id="roulette-color">Ready</small>
+            </div>
+          </div>
+          <div class="betting-panel">
+            <div class="balance-display">
+              <h3>Chip Tray</h3>
+              <p>Balance: <span id="roulette-balance">500</span> credits</p>
+            </div>
+            <label class="input-label" for="bet-amount">Bet Amount</label>
+            <input
+              type="number"
+              id="bet-amount"
+              min="1"
+              value="25"
+              step="1"
+            />
+            <div class="bet-options" role="group" aria-label="Bet Types">
+              <button class="bet-option" data-bet="red">Red</button>
+              <button class="bet-option" data-bet="black">Black</button>
+              <button class="bet-option" data-bet="green">Green (0)</button>
+              <button class="bet-option" data-bet="number">Straight Up</button>
+            </div>
+            <label class="input-label" for="bet-number">Number (0-36)</label>
+            <input
+              type="number"
+              id="bet-number"
+              min="0"
+              max="36"
+              placeholder="Pick a number"
+            />
+            <button id="spin-wheel" class="accent">Spin the Wheel</button>
+            <p class="status-banner" id="roulette-message"></p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="scripts.js"></script>
+  </body>
+</html>
