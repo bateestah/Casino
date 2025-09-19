@@ -435,7 +435,7 @@ document.addEventListener("DOMContentLoaded", () => {
       label.classList.add("wheel-number", color);
       label.dataset.number = number;
       label.textContent = number;
-      const centerAngle = -90 + index * segmentAngle;
+      const centerAngle = index * segmentAngle;
       label.style.setProperty("--angle", `${centerAngle}deg`);
       rouletteWheelNumbers.append(label);
       wheelNumberElements.set(number, label);
@@ -762,10 +762,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const currentRotation = rouletteState.rotation;
     const currentNormalized = ((currentRotation % 360) + 360) % 360;
     const targetIndex = numberIndexMap.get(winningNumber) ?? 0;
-    const pointerAngle = 270;
-    const labelAngle =
-      ((-90 + targetIndex * segmentAngle) % 360 + 360) % 360;
-    let deltaRotation = pointerAngle - labelAngle - currentNormalized;
+    const pointerAngle = 0;
+    const pocketAngle =
+      ((targetIndex * segmentAngle) % 360 + 360) % 360;
+    let deltaRotation = pointerAngle - pocketAngle - currentNormalized;
     deltaRotation = ((deltaRotation % 360) + 360) % 360;
     if (deltaRotation < 1e-4) {
       deltaRotation += 360;
