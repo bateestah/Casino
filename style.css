@@ -175,6 +175,8 @@ body {
   gap: 0.75rem;
   flex-wrap: wrap;
   min-height: 120px;
+  position: relative;
+  perspective: 900px;
 }
 
 .score {
@@ -346,6 +348,28 @@ button:disabled {
   justify-content: center;
   padding: 0.5rem;
   font-weight: 600;
+  opacity: 1;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+@keyframes dealCard {
+  0% {
+    transform: translate3d(0, -24px, 60px) scale(0.8) rotateX(18deg);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+.card.dealing {
+  animation: dealCard 320ms ease forwards;
+  animation-delay: calc(var(--deal-index, 0) * 0.08s);
+  will-change: transform, opacity;
 }
 
 .card.red {

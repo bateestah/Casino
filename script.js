@@ -133,6 +133,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const createCardElement = (card, hidden = false) => {
     const cardEl = document.createElement("div");
     cardEl.classList.add("card");
+    cardEl.dataset.rank = card.rank;
+    cardEl.dataset.suit = card.suit;
 
     if (hidden) {
       cardEl.classList.add("back");
@@ -158,11 +160,58 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const renderHand = (hand, container, hideHoleCard = false) => {
-    container.innerHTML = "";
+    const existingCards = Array.from(container.children);
+
+    const addDealingAnimation = (cardEl) => {
+      cardEl.classList.add("dealing");
+      const clearDealingState = () => {
+        cardEl.classList.remove("dealing");
+        cardEl.removeEventListener("animationend", clearDealingState);
+        cardEl.removeEventListener("animationcancel", clearDealingState);
+      };
+      cardEl.addEventListener("animationend", clearDealingState);
+      cardEl.addEventListener("animationcancel", clearDealingState);
+    };
+
     hand.forEach((card, index) => {
       const isHoleCard = hideHoleCard && index === 1;
-      container.append(createCardElement(card, isHoleCard));
+      const existingCardEl = existingCards[index];
+
+      if (existingCardEl) {
+        existingCardEl.style.setProperty("--deal-index", index);
+
+        const currentlyHidden = existingCardEl.classList.contains("back");
+        const desiredHidden = isHoleCard;
+        const cardChanged =
+          existingCardEl.dataset.rank !== card.rank ||
+          existingCardEl.dataset.suit !== card.suit;
+
+        if (!cardChanged && desiredHidden === currentlyHidden) {
+          return;
+        }
+
+        const replacement = createCardElement(card, desiredHidden);
+        replacement.style.setProperty("--deal-index", index);
+
+        const isReveal = currentlyHidden && !desiredHidden && !cardChanged;
+
+        if (!isReveal) {
+          addDealingAnimation(replacement);
+        }
+
+        container.replaceChild(replacement, existingCardEl);
+        return;
+      }
+
+      const newCard = createCardElement(card, isHoleCard);
+      newCard.style.setProperty("--deal-index", index);
+      addDealingAnimation(newCard);
+      container.appendChild(newCard);
     });
+
+    while (container.children.length > hand.length) {
+      container.removeChild(container.lastElementChild);
+    }
   };
 
   const updateScores = () => {
