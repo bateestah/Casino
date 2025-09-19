@@ -502,7 +502,7 @@ button:disabled {
   letter-spacing: 0.4px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
-  transform: rotate(var(--angle))
+  transform: translate(-50%, -50%) rotate(var(--angle))
     translateY(calc(var(--wheel-size, 280px) * -0.44))
     rotate(calc(var(--angle) * -1));
   transition: box-shadow 0.3s ease, filter 0.3s ease;
