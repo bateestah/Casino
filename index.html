@@ -93,6 +93,7 @@
           <div class="wheel-wrapper">
             <div class="pointer"></div>
             <div class="roulette-wheel" id="roulette-wheel">
+              <div class="wheel-numbers" id="roulette-wheel-numbers"></div>
               <div class="wheel-center"></div>
             </div>
           </div>
@@ -117,6 +118,17 @@
             <div class="field-group" id="roulette-number-field">
               <label for="roulette-number" class="label">Number</label>
               <select id="roulette-number"></select>
+            </div>
+
+            <div class="field-group" id="roulette-grid-wrapper">
+              <span class="label">Inside Bets</span>
+              <p class="grid-note">Tap a number on the layout to drop your chip.</p>
+              <div
+                class="number-grid"
+                id="roulette-grid"
+                role="grid"
+                aria-label="Roulette number layout"
+              ></div>
             </div>
 
             <div class="field-group hidden" id="roulette-color-field">
@@ -153,7 +165,9 @@
           </div>
         </div>
 
-        <div class="message" id="roulette-message">Pick a bet and spin the wheel.</div>
+        <div class="message" id="roulette-message">
+          Drop a chip on the layout and spin the wheel.
+        </div>
         <div class="history">
           <h4>Recent Spins</h4>
           <ul id="roulette-history"></ul>
