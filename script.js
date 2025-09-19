@@ -347,6 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const rouletteState = {
     bank: 500,
     rotation: 0,
+    insideBets: new Map(),
   };
 
   const redNumbers = new Set([
@@ -356,6 +357,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const rouletteBankEl = document.getElementById("roulette-bank");
   const rouletteBetInput = document.getElementById("roulette-bet");
   const rouletteWheel = document.getElementById("roulette-wheel");
+  const rouletteWheelNumbers = document.getElementById("roulette-wheel-numbers");
+  const rouletteGridWrapper = document.getElementById("roulette-grid-wrapper");
+  const rouletteGrid = document.getElementById("roulette-grid");
   const rouletteHistory = document.getElementById("roulette-history");
   const spinButton = document.getElementById("roulette-spin");
   const rouletteResetButton = document.getElementById("roulette-reset");
@@ -367,6 +371,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const rouletteNumberSelect = document.getElementById("roulette-number");
   const rouletteColorSelect = document.getElementById("roulette-color");
   const rouletteParitySelect = document.getElementById("roulette-parity");
+
+  const placeholderOption = document.createElement("option");
+  placeholderOption.value = "";
+  placeholderOption.textContent = "Select a number";
+  placeholderOption.disabled = true;
+  placeholderOption.selected = true;
+  rouletteNumberSelect.append(placeholderOption);
 
   for (let i = 0; i <= 36; i += 1) {
     const option = document.createElement("option");
@@ -385,6 +396,59 @@ document.addEventListener("DOMContentLoaded", () => {
     return number % 2 === 0 ? "even" : "odd";
   };
 
+  const wheelSequence = [
+    0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10,
+    5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26,
+  ];
+  const pocketCount = wheelSequence.length;
+  const segmentAngle = 360 / pocketCount;
+  const halfSegment = segmentAngle / 2;
+
+  const numberIndexMap = new Map();
+  const wheelNumberElements = new Map();
+  const numberToCell = new Map();
+
+  let lastWinningCell = null;
+  let lastWinningLabel = null;
+  const spinDuration = 2700;
+  const pointerAngle = -90;
+
+  if (rouletteWheelNumbers) {
+    rouletteWheelNumbers.innerHTML = "";
+  }
+
+  const gradientSegments = [];
+
+  wheelSequence.forEach((number, index) => {
+    numberIndexMap.set(number, index);
+    const color = getRouletteColor(number);
+    const colorValue =
+      color === "green" ? "#0cae6b" : color === "red" ? "#c0392b" : "#202938";
+    const start = (index * segmentAngle).toFixed(4);
+    const end = ((index + 1) * segmentAngle).toFixed(4);
+    gradientSegments.push(`${colorValue} ${start}deg ${end}deg`);
+
+    if (rouletteWheelNumbers) {
+      const label = document.createElement("span");
+      label.classList.add("wheel-number", color);
+      label.dataset.number = number;
+      label.textContent = number;
+      const centerAngle = -90 + index * segmentAngle;
+      label.style.setProperty("--angle", `${centerAngle}deg`);
+      rouletteWheelNumbers.append(label);
+      wheelNumberElements.set(number, label);
+    }
+  });
+
+  rouletteWheel.style.setProperty(
+    "--wheel-gradient",
+    gradientSegments.join(", ")
+  );
+  rouletteWheel.style.setProperty(
+    "--wheel-start-angle",
+    `${-90 - halfSegment}deg`
+  );
+
   const updateRouletteBank = () => {
     rouletteBankEl.textContent = formatChips(rouletteState.bank);
   };
@@ -396,9 +460,145 @@ document.addEventListener("DOMContentLoaded", () => {
     const betType = selected ? selected.value : "number";
 
     numberField.classList.toggle("hidden", betType !== "number");
+    if (rouletteGridWrapper) {
+      rouletteGridWrapper.classList.toggle("hidden", betType !== "number");
+    }
     colorField.classList.toggle("hidden", betType !== "color");
     parityField.classList.toggle("hidden", betType !== "parity");
   };
+
+  const ensureNumberBetSelected = () => {
+    const activeRadio = document.querySelector(
+      'input[name="roulette-bet-type"]:checked'
+    );
+    if (activeRadio && activeRadio.value === "number") {
+      return;
+    }
+    const numberRadio = document.querySelector(
+      'input[name="roulette-bet-type"][value="number"]'
+    );
+    if (numberRadio) {
+      numberRadio.checked = true;
+    }
+    updateRouletteBetFields();
+  };
+
+  const syncInsideBetVisuals = () => {
+    numberToCell.forEach((cell, value) => {
+      const amount = rouletteState.insideBets.get(value);
+      if (amount && amount > 0) {
+        cell.classList.add("active");
+        cell.setAttribute("aria-pressed", "true");
+        cell.setAttribute("data-chip", formatChips(amount));
+      } else {
+        cell.classList.remove("active");
+        cell.setAttribute("aria-pressed", "false");
+        cell.removeAttribute("data-chip");
+      }
+    });
+
+    wheelNumberElements.forEach((label, value) => {
+      if (rouletteState.insideBets.has(value)) {
+        label.classList.add("active");
+      } else {
+        label.classList.remove("active");
+      }
+    });
+  };
+
+  const clearInsideBets = () => {
+    rouletteState.insideBets.clear();
+    syncInsideBetVisuals();
+    if (rouletteNumberSelect) {
+      rouletteNumberSelect.selectedIndex = 0;
+    }
+  };
+
+  const toggleInsideBet = (number) => {
+    if (rouletteState.insideBets.has(number)) {
+      rouletteState.insideBets.delete(number);
+      syncInsideBetVisuals();
+      if (rouletteNumberSelect) {
+        rouletteNumberSelect.selectedIndex = 0;
+      }
+      return;
+    }
+
+    const amount = parseInt(rouletteBetInput.value, 10);
+    if (Number.isNaN(amount) || amount <= 0) {
+      rouletteMessage.textContent =
+        "Enter a valid bet amount before placing chips.";
+      return;
+    }
+
+    ensureNumberBetSelected();
+    rouletteState.insideBets.set(number, amount);
+    syncInsideBetVisuals();
+    if (rouletteNumberSelect) {
+      rouletteNumberSelect.selectedIndex = 0;
+    }
+  };
+
+  const clearWinningHighlights = () => {
+    if (lastWinningCell) {
+      lastWinningCell.classList.remove("result");
+      lastWinningCell = null;
+    }
+    if (lastWinningLabel) {
+      lastWinningLabel.classList.remove("result");
+      lastWinningLabel = null;
+    }
+  };
+
+  const showWinningHighlights = (number) => {
+    clearWinningHighlights();
+    const label = wheelNumberElements.get(number);
+    if (label) {
+      label.classList.add("result");
+      lastWinningLabel = label;
+    }
+    const cell = numberToCell.get(number);
+    if (cell) {
+      cell.classList.add("result");
+      lastWinningCell = cell;
+    }
+  };
+
+  const createGridCell = (number) => {
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.classList.add("grid-cell");
+    const color = getRouletteColor(number);
+    cell.classList.add(color);
+    cell.dataset.number = number;
+    cell.textContent = number;
+    cell.setAttribute("aria-pressed", "false");
+    cell.setAttribute("aria-label", `Bet on ${number}`);
+    if (number === 0) {
+      cell.classList.add("zero");
+      cell.style.gridRow = "span 12";
+    }
+    cell.addEventListener("click", () => toggleInsideBet(number));
+    numberToCell.set(number, cell);
+    return cell;
+  };
+
+  if (rouletteGrid) {
+    rouletteGrid.innerHTML = "";
+    const zeroCell = createGridCell(0);
+    rouletteGrid.append(zeroCell);
+
+    for (let row = 0; row < 12; row += 1) {
+      const base = row * 3;
+      const layoutNumbers = [base + 3, base + 2, base + 1];
+      layoutNumbers.forEach((value) => {
+        const cell = createGridCell(value);
+        rouletteGrid.append(cell);
+      });
+    }
+  }
+
+  syncInsideBetVisuals();
 
   const addHistoryItem = (number, color, win, delta) => {
     const item = document.createElement("li");
@@ -420,82 +620,147 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  const spinRoulette = () => {
-    const betAmount = parseInt(rouletteBetInput.value, 10);
-    if (Number.isNaN(betAmount) || betAmount <= 0) {
-      rouletteMessage.textContent = "Enter a valid bet amount.";
+  rouletteNumberSelect.addEventListener("change", (event) => {
+    const value = parseInt(event.target.value, 10);
+    if (Number.isNaN(value)) {
+      return;
+    }
+    const amount = parseInt(rouletteBetInput.value, 10);
+    if (Number.isNaN(amount) || amount <= 0) {
+      rouletteMessage.textContent =
+        "Enter a valid bet amount before placing chips.";
+      event.target.selectedIndex = 0;
       return;
     }
 
-    if (betAmount > rouletteState.bank) {
+    ensureNumberBetSelected();
+    rouletteState.insideBets.set(value, amount);
+    syncInsideBetVisuals();
+    event.target.selectedIndex = 0;
+  });
+
+  const spinRoulette = () => {
+    const betRadio = document.querySelector(
+      'input[name="roulette-bet-type"]:checked'
+    );
+    const betType = betRadio ? betRadio.value : "number";
+
+    let totalBet = 0;
+    let chosenValue;
+
+    if (betType === "number") {
+      if (rouletteState.insideBets.size === 0) {
+        rouletteMessage.textContent =
+          "Place at least one chip on the number layout.";
+        return;
+      }
+
+      rouletteState.insideBets.forEach((amount) => {
+        totalBet += amount;
+      });
+    } else {
+      const betAmount = parseInt(rouletteBetInput.value, 10);
+      if (Number.isNaN(betAmount) || betAmount <= 0) {
+        rouletteMessage.textContent = "Enter a valid bet amount.";
+        return;
+      }
+      totalBet = betAmount;
+      if (betType === "color") {
+        chosenValue = rouletteColorSelect.value;
+      } else {
+        chosenValue = rouletteParitySelect.value;
+      }
+    }
+
+    if (totalBet > rouletteState.bank) {
       rouletteMessage.textContent = "Insufficient chips for that bet.";
       return;
     }
 
-    const betType = document.querySelector(
-      'input[name="roulette-bet-type"]:checked'
-    ).value;
-
-    let chosenValue;
-    if (betType === "number") {
-      chosenValue = parseInt(rouletteNumberSelect.value, 10);
-    } else if (betType === "color") {
-      chosenValue = rouletteColorSelect.value;
-    } else {
-      chosenValue = rouletteParitySelect.value;
-    }
-
-    rouletteState.bank -= betAmount;
+    rouletteState.bank -= totalBet;
     updateRouletteBank();
+    clearWinningHighlights();
 
-    const resultNumber = Math.floor(Math.random() * 37);
-    const resultColor = getRouletteColor(resultNumber);
-    const resultParity = getRouletteParity(resultNumber);
+    const resultNumber = Math.floor(Math.random() * pocketCount);
+    const winningNumber = wheelSequence[resultNumber];
+    const resultColor = getRouletteColor(winningNumber);
+    const resultParity = getRouletteParity(winningNumber);
+
+    const currentRotation = rouletteState.rotation;
+    const currentNormalized = ((currentRotation % 360) + 360) % 360;
+    const targetIndex = numberIndexMap.get(winningNumber) ?? 0;
+    const label = wheelNumberElements.get(winningNumber);
+    const rawAngle = label
+      ? parseFloat(label.style.getPropertyValue("--angle"))
+      : -90 + targetIndex * segmentAngle;
+    const labelAngle = Number.isNaN(rawAngle)
+      ? -90 + targetIndex * segmentAngle
+      : rawAngle;
+    const targetAngle = ((pointerAngle - labelAngle) % 360 + 360) % 360;
+    let deltaRotation = targetAngle - currentNormalized;
+    if (deltaRotation <= 0) {
+      deltaRotation += 360;
+    }
+    const extraSpins = 4 + Math.floor(Math.random() * 3);
+    const finalRotation = currentRotation + deltaRotation + extraSpins * 360;
+    rouletteState.rotation = finalRotation;
+    rouletteWheel.style.setProperty("--rotation", `${finalRotation}deg`);
+
+    spinButton.disabled = true;
+    rouletteMessage.textContent = "The wheel is spinning...";
 
     let win = false;
     let payout = 0;
 
-    if (betType === "number" && resultNumber === chosenValue) {
-      win = true;
-      payout = betAmount * 36;
+    if (betType === "number") {
+      const winningBet = rouletteState.insideBets.get(winningNumber) || 0;
+      if (winningBet > 0) {
+        win = true;
+        payout = winningBet * 36;
+      }
     } else if (betType === "color" && resultColor === chosenValue) {
       win = true;
-      payout = betAmount * 2;
+      payout = totalBet * 2;
     } else if (
       betType === "parity" &&
       resultParity !== "none" &&
       resultParity === chosenValue
     ) {
       win = true;
-      payout = betAmount * 2;
+      payout = totalBet * 2;
     }
 
-    const rotationDelta = 720 + Math.floor(Math.random() * 360);
-    rouletteState.rotation += rotationDelta;
-    rouletteWheel.style.setProperty("--rotation", `${rouletteState.rotation}deg`);
-    spinButton.disabled = true;
-    setTimeout(() => {
-      spinButton.disabled = false;
-    }, 2600);
-
-    if (win) {
-      rouletteState.bank += payout;
+    const finalizeSpin = () => {
+      if (win) {
+        rouletteState.bank += payout;
+      }
       updateRouletteBank();
-      const winnings = payout - betAmount;
-      rouletteMessage.innerHTML = `<strong>The ball lands on ${resultNumber} (${resultColor.toUpperCase()})!</strong> You win ${formatChips(
-        winnings
-      )} chips.`;
-      addHistoryItem(resultNumber, resultColor, true, winnings);
-    } else {
-      rouletteMessage.innerHTML = `<strong>The ball lands on ${resultNumber} (${resultColor.toUpperCase()})!</strong> You lose ${formatChips(
-        betAmount
-      )} chips.`;
-      addHistoryItem(resultNumber, resultColor, false, betAmount);
-    }
+      showWinningHighlights(winningNumber);
 
-    if (rouletteState.bank <= 0) {
-      rouletteMessage.innerHTML += " You're out of chips. Reset to keep playing.";
-    }
+      const resultText = `<strong>The ball lands on ${winningNumber} (${resultColor.toUpperCase()})!</strong>`;
+
+      if (win) {
+        const winnings = payout - totalBet;
+        rouletteMessage.innerHTML = `${resultText} You win ${formatChips(
+          winnings
+        )} chips.`;
+        addHistoryItem(winningNumber, resultColor, true, winnings);
+      } else {
+        rouletteMessage.innerHTML = `${resultText} You lose ${formatChips(
+          totalBet
+        )} chips.`;
+        addHistoryItem(winningNumber, resultColor, false, totalBet);
+      }
+
+      if (rouletteState.bank <= 0) {
+        rouletteMessage.innerHTML +=
+          " You're out of chips. Reset to keep playing.";
+      }
+
+      spinButton.disabled = false;
+    };
+
+    setTimeout(finalizeSpin, spinDuration);
   };
 
   const resetRoulette = () => {
@@ -503,20 +768,32 @@ document.addEventListener("DOMContentLoaded", () => {
     rouletteState.rotation = 0;
     rouletteWheel.style.setProperty("--rotation", "0deg");
     rouletteHistory.innerHTML = "";
+    clearInsideBets();
+    clearWinningHighlights();
     updateRouletteBank();
-    rouletteMessage.textContent = "Bank refilled. Place a bet to spin again.";
+    rouletteMessage.textContent = "Bank refilled. Place chips to spin again.";
+    spinButton.disabled = false;
   };
 
   document
     .querySelectorAll('input[name="roulette-bet-type"]')
-    .forEach((radio) => radio.addEventListener("change", updateRouletteBetFields));
+    .forEach((radio) =>
+      radio.addEventListener("change", (event) => {
+        updateRouletteBetFields();
+        if (event.target.value !== "number") {
+          clearInsideBets();
+        } else {
+          syncInsideBetVisuals();
+        }
+      })
+    );
 
   spinButton.addEventListener("click", spinRoulette);
   rouletteResetButton.addEventListener("click", resetRoulette);
 
   updateRouletteBetFields();
   updateRouletteBank();
-  rouletteMessage.textContent = "Pick a bet and spin the wheel.";
+  rouletteMessage.textContent = "Drop chips on the layout and spin the wheel.";
 
   showPanel("start");
 });

@@ -402,13 +402,14 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(260px, 320px) 1fr;
   gap: 2.5rem;
-  align-items: center;
+  align-items: start;
 }
 
 .wheel-wrapper {
   position: relative;
-  width: 280px;
-  height: 280px;
+  --wheel-size: 280px;
+  width: var(--wheel-size);
+  height: var(--wheel-size);
   margin: 0 auto;
 }
 
@@ -422,7 +423,7 @@ button:disabled {
   border-left: 14px solid transparent;
   border-right: 14px solid transparent;
   border-bottom: 20px solid rgba(255, 255, 255, 0.9);
-  z-index: 2;
+  z-index: 3;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
 }
 
@@ -430,8 +431,15 @@ button:disabled {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: conic-gradient(#16a085 0deg 9.73deg, rgba(22, 194, 208, 0) 9.73deg 9.8deg),
-    repeating-conic-gradient(#e74c3c 0deg 9.73deg, #2c3e50 9.73deg 19.46deg);
+  background: radial-gradient(
+      circle at center,
+      rgba(0, 0, 0, 0.35) 0%,
+      rgba(0, 0, 0, 0) 55%
+    ),
+    conic-gradient(
+      from var(--wheel-start-angle, -90deg),
+      var(--wheel-gradient, #202938 0deg 360deg)
+    );
   box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5), 0 15px 35px rgba(0, 0, 0, 0.55);
   border: 10px solid rgba(0, 0, 0, 0.45);
   display: flex;
@@ -439,6 +447,16 @@ button:disabled {
   justify-content: center;
   transition: transform 2.6s cubic-bezier(0.25, 0.1, 0.25, 1);
   transform: rotate(var(--rotation, 0deg));
+}
+
+.roulette-wheel::before {
+  content: "";
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  border: 4px solid rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 6px 14px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
 }
 
 .roulette-wheel::after {
@@ -456,13 +474,67 @@ button:disabled {
   height: 18%;
   border-radius: 50%;
   background: linear-gradient(135deg, #0f172a, #1f2a44);
-  z-index: 1;
+  z-index: 2;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+.wheel-numbers {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wheel-number {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #fff;
+  letter-spacing: 0.4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
+  transform: rotate(var(--angle))
+    translateY(calc(var(--wheel-size, 280px) * -0.44))
+    rotate(calc(var(--angle) * -1));
+  transition: box-shadow 0.3s ease, filter 0.3s ease;
+}
+
+.wheel-number.red {
+  background: linear-gradient(135deg, #c0392b, #962d22);
+}
+
+.wheel-number.black {
+  background: linear-gradient(135deg, #1f2937, #0f172a);
+}
+
+.wheel-number.green {
+  background: linear-gradient(135deg, #0f9f6e, #0b7f58);
+}
+
+.wheel-number.active {
+  box-shadow: 0 0 0 3px rgba(22, 194, 208, 0.65),
+    0 6px 14px rgba(22, 194, 208, 0.25);
+}
+
+.wheel-number.result {
+  box-shadow: 0 0 0 4px rgba(248, 212, 121, 0.65),
+    0 0 18px rgba(248, 212, 121, 0.55);
+  filter: brightness(1.1);
 }
 
 .betting-panel {
   display: grid;
   gap: 1rem;
+  align-content: start;
 }
 
 .field-group {
@@ -473,6 +545,94 @@ button:disabled {
 .field-group .label {
   font-weight: 600;
   color: var(--accent);
+}
+
+.grid-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.number-grid {
+  display: grid;
+  grid-template-columns: 72px repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(12, 42px);
+  gap: 0.45rem;
+  padding: 0.4rem;
+  border-radius: 14px;
+  background: rgba(12, 18, 32, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.number-grid .grid-cell {
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  background: linear-gradient(135deg, #1f2937, #0f172a);
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.number-grid .grid-cell.red {
+  background: linear-gradient(135deg, #c0392b, #962d22);
+}
+
+.number-grid .grid-cell.black {
+  background: linear-gradient(135deg, #1f2433, #0b1022);
+}
+
+.number-grid .grid-cell.green {
+  background: linear-gradient(135deg, #0f9f6e, #0b7f58);
+}
+
+.number-grid .grid-cell.zero {
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+
+.number-grid .grid-cell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 18px rgba(0, 0, 0, 0.35);
+}
+
+.number-grid .grid-cell.active {
+  border-color: rgba(22, 194, 208, 0.7);
+  box-shadow: 0 0 0 3px rgba(22, 194, 208, 0.35);
+}
+
+.number-grid .grid-cell.result {
+  border-color: rgba(248, 212, 121, 0.7);
+  box-shadow: 0 0 0 3px rgba(248, 212, 121, 0.5),
+    0 0 16px rgba(248, 212, 121, 0.45);
+}
+
+.number-grid .grid-cell[data-chip]::after {
+  content: attr(data-chip);
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff, #f472b6 65%, #db2777);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
 }
 
 .field-group label {
@@ -515,6 +675,14 @@ button:disabled {
     justify-items: center;
   }
 
+  .wheel-wrapper {
+    --wheel-size: 240px;
+  }
+
+  .number-grid {
+    width: min(100%, 360px);
+  }
+
   .history ul {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
@@ -542,6 +710,32 @@ button:disabled {
   .controls .button-group {
     width: 100%;
     justify-content: center;
+  }
+
+  .wheel-wrapper {
+    --wheel-size: 220px;
+  }
+
+  .wheel-number {
+    width: 30px;
+    height: 30px;
+    font-size: 0.75rem;
+  }
+
+  .number-grid {
+    grid-template-columns: 58px repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(12, 36px);
+    gap: 0.35rem;
+  }
+
+  .number-grid .grid-cell {
+    font-size: 0.85rem;
+  }
+
+  .number-grid .grid-cell[data-chip]::after {
+    width: 30px;
+    height: 30px;
+    font-size: 0.65rem;
   }
 }
 
